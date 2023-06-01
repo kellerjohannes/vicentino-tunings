@@ -34,7 +34,7 @@
     (:c :sharp :comma    :C♯❜)
     (:d nil nil          :D)
     (:c :sharp nil       :C♯)
-    (:c :sharp :dot      :Ċ♯)
+    ;; (:c :sharp :dot      :Ċ♯)
     (:d :flat nil        :D♭)
     (:d nil :dot         :Ḋ)
     (:d :flat :dot       :Ḋ♭)
@@ -42,7 +42,7 @@
     (:e nil nil          :E)
     (:e :flat nil        :E♭)
     (:d :sharp nil       :D♯)
-    (:d :sharp :dot      :Ḋ♯)
+    ;; (:d :sharp :dot      :Ḋ♯)
     (:e nil :dot         :Ė)
     (:e :flat :dot       :Ė♭)
     (:e nil :comma       :E❜)
@@ -54,7 +54,7 @@
     (:f :sharp nil       :F♯)
     (:f :flat nil        :F♭)
     (:f :flat :dot       :Ḟ♭)
-    (:f :sharp :dot      :Ḟ♯)
+    ;; (:f :sharp :dot      :Ḟ♯)
     (:g :flat nil        :G♭)
     (:g nil :dot         :Ġ)
     (:g :flat :dot       :Ġ♭)
@@ -62,11 +62,11 @@
     (:g :flat :comma     :G♭❜)
     (:a nil nil          :A)
     (:g :sharp nil       :G♯)
-    (:g :sharp :dot      :Ġ♯)
+    ;; (:g :sharp :dot      :Ġ♯)
     (:a :flat nil        :A♭)
     (:a nil :dot         :Ȧ)
     (:a :flat :dot       :Ȧ♭)
-    (:a :sharp :dot      :Ȧ♯)
+    ;; (:a :sharp :dot      :Ȧ♯)
     (:a nil :comma       :A❜)
     (:a :flat :comma     :A♭❜)
     (:a :flat :dot-comma :Ȧ♭❜)
@@ -80,13 +80,21 @@
     (:b nil :dot         :Ḃ♮)
     (:b :natural :dot    :Ḃ♮)
     (:b :flat :dot       :Ḃ♭)
-    (:b nil :comma       :B♮❜)))
+    (:b nil :comma       :B♮❜)
+    ;; doubtful cases, maybe they need separate handling
+    (:f :sharp :dot      :G♭)
+    (:g :sharp :dot      :A♭)
+    (:c :sharp :dot      :D♭)
+    ))
 
 (defun lookup-setzkasten-shorthand (setzkasten-pitch)
-  (fourth (find setzkasten-pitch *dict-setzkasten-shorthand*
-                :key (lambda (entry)
-                       (list (first entry) (second entry) (third entry)))
-                :test #'equal)))
+  (let ((result (fourth (find setzkasten-pitch *dict-setzkasten-shorthand*
+                        :key (lambda (entry)
+                               (list (first entry) (second entry) (third entry)))
+                        :test #'equal))))
+    (if result
+        result
+        (format t "~&Couldn't process note ~a" setzkasten-pitch))))
 
 (defparameter *keymaps*
   '((:wolf-Ė-Ḃ♮ ((:Ė  . 23)
