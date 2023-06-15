@@ -34,7 +34,6 @@
     (:c :sharp :comma    :C♯❜)
     (:d nil nil          :D)
     (:c :sharp nil       :C♯)
-    ;; (:c :sharp :dot      :Ċ♯)
     (:d :flat nil        :D♭)
     (:d nil :dot         :Ḋ)
     (:d :flat :dot       :Ḋ♭)
@@ -42,7 +41,6 @@
     (:e nil nil          :E)
     (:e :flat nil        :E♭)
     (:d :sharp nil       :D♯)
-    ;; (:d :sharp :dot      :Ḋ♯)
     (:e nil :dot         :Ė)
     (:e :flat :dot       :Ė♭)
     (:e nil :comma       :E❜)
@@ -54,7 +52,6 @@
     (:f :sharp nil       :F♯)
     (:f :flat nil        :F♭)
     (:f :flat :dot       :Ḟ♭)
-    ;; (:f :sharp :dot      :Ḟ♯)
     (:g :flat nil        :G♭)
     (:g nil :dot         :Ġ)
     (:g :flat :dot       :Ġ♭)
@@ -62,11 +59,9 @@
     (:g :flat :comma     :G♭❜)
     (:a nil nil          :A)
     (:g :sharp nil       :G♯)
-    ;; (:g :sharp :dot      :Ġ♯)
     (:a :flat nil        :A♭)
     (:a nil :dot         :Ȧ)
     (:a :flat :dot       :Ȧ♭)
-    ;; (:a :sharp :dot      :Ȧ♯)
     (:a nil :comma       :A❜)
     (:a :flat :comma     :A♭❜)
     (:a :flat :dot-comma :Ȧ♭❜)
@@ -85,6 +80,11 @@
     (:f :sharp :dot      :G♭)
     (:g :sharp :dot      :A♭)
     (:c :sharp :dot      :D♭)
+    ;; (:c :sharp :dot      :Ċ♯)
+    ;; (:d :sharp :dot      :Ḋ♯)
+    ;; (:f :sharp :dot      :Ḟ♯)
+    ;; (:g :sharp :dot      :Ġ♯)
+    ;; (:a :sharp :dot      :Ȧ♯)
     ))
 
 (defun lookup-setzkasten-shorthand (setzkasten-pitch)
@@ -127,7 +127,45 @@
                  (:A♭ . -4)
                  (:D♭ . -5)
                  (:G♭ . -6)
-                 (:Ḃ♮ . -7)))))
+                 (:Ḃ♮ . -7)))
+    (:mt-38-g♭-ḃ♯     ((:Ḃ♯ . 31)
+                       (:Ė♯ . 30)
+                       (:Ȧ♯ . 29)
+                       (:Ḋ♯ . 28)
+                       (:Ġ♯ . 27)
+                       (:Ċ♯ . 26)
+                       (:Ḟ♯ . 25)
+                       (:Ḃ♮ . 24)
+                       (:Ė  . 23)
+                       (:Ȧ  . 22)
+                       (:Ḋ  . 21)
+                       (:Ġ  . 20)
+                       (:Ċ  . 19)
+                       (:Ḟ  . 18)
+                       (:Ḃ♭ . 17)
+                       (:Ė♭ . 16)
+                       (:Ȧ♭ . 15)
+                       (:Ḋ♭ . 14)
+                       (:Ġ♭ . 13)
+                       (:B♯ . 12)
+                       (:E♯ . 11)
+                       (:A♯ . 10)
+                       (:D♯ . 9)
+                       (:G♯ . 8)
+                       (:C♯ . 7)
+                       (:F♯ . 6)
+                       (:B♮ . 5)
+                       (:E  . 4)
+                       (:A  . 3)
+                       (:D  . 2)
+                       (:G  . 1)
+                       (:C  . 0)
+                       (:F  . -1)
+                       (:B♭ . -2)
+                       (:E♭ . -3)
+                       (:A♭ . -4)
+                       (:D♭ . -5)
+                       (:G♭ . -6)))))
 
 (defun get-keymap (name)
   (cadr (assoc name *keymaps*)))
@@ -152,11 +190,18 @@
     (:name "1/3-SC-meantone, wolf Ė-Ḃ♮"
      :id :tuning2
      :description "Regular meantone, 1/3-comma, from C♭ (Ḃ♮) to D♯♯♯ (Ė)"
-     :fun ,(pitch-fun (meantone -1/3) :wolf-Ė-Ḃ♮))))
+     :fun ,(pitch-fun (meantone -1/3) :wolf-Ė-Ḃ♮))
+    (:name "1/4-SC-meantone, fifth-range G♭-Ḃ♯"
+           :id :tuning3
+           :description "Regular meantone, 1/4-comma with 38 keys, from G♭ to Ḃ♯"
+           :fun ,(pitch-fun (meantone -1/4) :mt-38-g♭-ḃ♯))))
 
 
 (defun get-tuning (tuning-id)
   (getf (find tuning-id *tunings* :key (lambda (item) (getf item :id))) :fun))
+
+(defun get-tuning-description (tuning-id)
+  (getf (find tuning-id *tunings* :key (lambda (item) (getf item :id))) :description))
 
 (defun setzkasten-pitch (tuning-id setzkasten-note)
   (* (pitch (get-tuning tuning-id)
@@ -164,3 +209,72 @@
                                                (second setzkasten-note)
                                                (third setzkasten-note))))
      (expt 2 (fourth setzkasten-note))))
+
+
+(defun ratio-to-cent (interval-ratio)
+  (/ (log interval-ratio) (log (expt 2 1/1200))))
+
+
+(defparameter *eq-scale*
+  '((:c . 0)
+    (:c♯ . 1)
+    (:d♭ . 1)
+    (:c♯/d♭ . 1)
+    (:d . 2)
+    (:d♯ . 3)
+    (:e♭ . 3)
+    (:e♭/d♯ . 3)
+    (:e . 4)
+    (:f . 5)
+    (:f♯ . 6)
+    (:g♭ . 6)
+    (:f♯/g♭ . 6)
+    (:g . 7)
+    (:g♯ . 8)
+    (:a♭ . 8)
+    (:g♯/a♭ . 8)
+    (:a . 9)
+    (:a♯ . 10)
+    (:b♭ . 10)
+    (:b♭/a♯ . 10)
+    (:b♮ . 11)
+    (:b . 11)
+    (:c2 . 12)))
+
+
+(defun cent-deviation-to-eq (interval-ratio eq-notename)
+  (- (ratio-to-cent interval-ratio)
+     (* 100.0 (cdr (assoc eq-notename *eq-scale*)))))
+
+(defun calculate-cent-table (notename-list eq-equivalent-list tuning-id
+                             &key (reference-note-tuning :a) (reference-note-eq :a))
+  (format t "~&~a:~%~%" (get-tuning-description tuning-id))
+  (let ((cent-shift (- (cent-deviation-to-eq (pitch (get-tuning tuning-id) reference-note-tuning)
+                                             reference-note-eq))))
+    (mapcar (lambda (notename eq-equivalent)
+              (let ((interval-ratio (pitch (get-tuning tuning-id) notename)))
+                (format t "~&| ~a~4,0t | ~,4f~12,0t | ~,2f~22,0t | ~,2f~32,0t | ~a~41,0t |"
+                        notename
+                        interval-ratio
+                        (ratio-to-cent interval-ratio)
+                        (+ cent-shift (cent-deviation-to-eq interval-ratio eq-equivalent))
+                        eq-equivalent
+                        )))
+            notename-list eq-equivalent-list))
+  nil)
+
+(calculate-cent-table '(:c :c♯ :d :e♭ :e :f :f♯ :g :g♯ :a :b♭ :b♮)
+                      '(:c :c♯/d♭ :d :e♭/d♯ :e :f :f♯/g♭ :g :g♯/a♭ :a :b♭/a♯ :b♮)
+                      :tuning3)
+
+(calculate-cent-table '(:d♭ :d♯ :e♯ :g♭ :a♭ :a♯ :b♯)
+                      '(:c♯/d♭ :e♭/d♯ :f  :f♯/g♭ :g♯/a♭ :b♭/a♯ :c2)
+                      :tuning3)
+
+(calculate-cent-table '(:ċ :ċ♯ :ḋ :ė♭ :ė :ḟ :ḟ♯ :ġ :ġ♯ :ȧ :ḃ♭ :ḃ♮)
+                      '(:c :c♯/d♭ :d :e♭/d♯ :e :f :f♯/g♭ :g :g♯/a♭ :a :b♭/a♯ :b♮)
+                      :tuning3)
+
+(calculate-cent-table '(:ḋ♭ :ḋ♯ :ġ♭ :ȧ♭ :ȧ♯)
+                      '(:c♯/d♭ :e♭/d♯ :f♯/g♭ :g♯/a♭ :b♭/a♯)
+                      :tuning3)
