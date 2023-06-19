@@ -3,18 +3,31 @@
 (defun ratio->length (ratio &key (unit-interval (expt 2 1/1200)))
   (/ (log ratio) (log unit-interval)))
 
-(defun simplify (interval &key (identity-interval 2/1))
-  (cond ((< interval 1/1) (simplify (* interval identity-interval)
-                                    :identity-interval identity-interval))
-        ((>= interval identity-interval) (simplify (/ interval identity-interval)
-                                                   :identity-interval identity-interval))
-        (t interval)))
+(defun simplify (interval &key (identity-interval 2/1) (number-of-iterations 0))
+  (cond ((< interval 1/1)
+         (simplify (* interval identity-interval)
+                   :identity-interval identity-interval
+                   :number-of-iterations (1+ number-of-iterations)))
+        ((>= interval identity-interval)
+         (simplify (/ interval identity-interval)
+                   :identity-interval identity-interval
+                   :number-of-iterations (1+ number-of-iterations)))
+        (t (values interval number-of-iterations))))
 
 (defun linear-system (index &key (generator-interval 3/2) (identity-interval 2/1))
   (simplify (expt generator-interval index) :identity-interval identity-interval))
 
+(defun chain-intervals (interval-ratio index)
+  (do ((result 1 (simplify (* result interval-ratio)))
+       (counter index (1- counter)))
+      ((zerop counter) result)))
+
 (defun temper (interval amount &key (reference-interval 81/80))
   (* interval (expt reference-interval amount)))
+
+(defun get-tempering (interval-ratio-real interval-ratio-utopia &key (unit 81/80))
+  (ratio-to-cent (/ interval-ratio-real interval-ratio-utopia)
+                 :unit unit))
 
 (defmacro meantone (fraction)
   `(lambda (index)
@@ -211,8 +224,8 @@
      (expt 2 (fourth setzkasten-note))))
 
 
-(defun ratio-to-cent (interval-ratio)
-  (/ (log interval-ratio) (log (expt 2 1/1200))))
+(defun ratio-to-cent (interval-ratio &key (unit (expt 2 1/1200)))
+  (/ (log interval-ratio) (log unit)))
 
 
 (defparameter *eq-scale*
@@ -278,3 +291,13 @@
 (calculate-cent-table '(:ḋ♭ :ḋ♯ :ġ♭ :ȧ♭ :ȧ♯)
                       '(:c♯/d♭ :e♭/d♯ :f♯/g♭ :g♯/a♭ :b♭/a♯)
                       :tuning3)
+
+
+
+(defvar fifths-c-d '(:c :g :d :a :e :b♮ :f♯ :c♯ :g♯ :d♯ :a♯ :e♯ :b♯ :ġ♭ :ḋ♭ :ȧ♭ :ė♭ :ḃ♭ :ḟ :ċ :ġ :ḋ))
+
+
+
+;; fifth tempering in quintenschaukel
+(defparameter *magical-fifth* (expt (* 9/8 (expt 2 12)) 1/21))
+(defparameter *magical-tempering* (get-tempering (expt (* 9/8 (expt 2 12)) 1/21) 3/2))
