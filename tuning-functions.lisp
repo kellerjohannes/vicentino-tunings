@@ -1,9 +1,15 @@
 (in-package :vicentino-tunings)
 
+;; Functions for calculating pitch
+
 (defun ratio->length (ratio &key (unit-interval (expt 2 1/1200)))
+  "Transforms a ratio (or floating point number) representing an interval into a length,where the
+UNIT-INTERVAL (default 1 ¢) can be set."
   (/ (log ratio) (log unit-interval)))
 
 (defun simplify (interval &key (identity-interval 2/1) (number-of-iterations 0))
+  "Returns an interval (a ratio or a floating point number) that fits between 1 and
+IDENTITY-INTERVAL (default 2/1)."
   (cond ((< interval 1/1)
          (simplify (* interval identity-interval)
                    :identity-interval identity-interval
@@ -15,252 +21,116 @@
         (t (values interval number-of-iterations))))
 
 (defun linear-system (index &key (generator-interval 3/2) (identity-interval 2/1))
+  "Returns an interval (ratio or floating point number) by multiplying the
+GENERATOR-INTERVAL INDEX times, and puts the result between 1 and IDENTITY-INTERVAL."
   (simplify (expt generator-interval index) :identity-interval identity-interval))
 
 (defun chain-intervals (interval-ratio index)
+  "Returns the result of a chain of INTERVAL-RATIO with length INDEX. The result is equivalent to
+the function LINEAR-SYSTEM, but in CHAIN-INTERVALS each member of the chain is simplified to
+avoid large numbers."
   (do ((result 1 (simplify (* result interval-ratio)))
        (counter index (1- counter)))
       ((zerop counter) result)))
 
 (defun temper (interval amount &key (reference-interval 81/80))
+  "Returns an interval (ratio or float) that is modified from INTERVAL by a fraction (AMOUNT) of
+the REFERENCE-INTERVAL (default is the syntonic comma, 81/80)."
   (* interval (expt reference-interval amount)))
 
 (defun get-tempering (interval-ratio-real interval-ratio-utopia &key (unit 81/80))
-  (ratio-to-cent (/ interval-ratio-real interval-ratio-utopia)
-                 :unit unit))
-
-(defmacro meantone (fraction)
-  `(lambda (index)
-     (linear-system index :generator-interval (temper 3/2 ,fraction))))
+  "Returns the amount of tempering for INTERVAL-RATIO-REAL in relation to the untempered
+INTERVAL-RATIO-UTOPIA. The UNIT can be specified (default is the syntonic comma)."
+  (ratio->length (/ interval-ratio-real interval-ratio-utopia) :unit-interval unit))
 
 (defun tune (tuning-fun index)
+  "Takes a function that calculates a pitch based on an INDEX (normally a fifth-index) and returns
+the pitch. See also the functions PITCH and NOTE."
+  (unless (functionp tuning-fun)
+    (error "Expected a function for :tuning-fun, but ~s is not of type COMPILED-FUNCTION."
+           tuning-fun))
+  (unless (integerp index)
+    (error "Expected an integer for :index, but ~s does not fulfill INTEGERP." index))
   (funcall tuning-fun index))
 
-(defparameter *dict-setzkasten-shorthand*
-  '((:c nil nil          :C)
-    (:b :sharp nil       :C♯)
-    (:b :sharp :comma    :C♯❜)
-    (:c nil :dot         :Ċ)
-    (:c :flat :dot       :Ċ♭)
-    (:c :flat nil        :C♭)
-    (:c nil :comma       :C❜)
-    (:c :sharp :comma    :C♯❜)
-    (:d nil nil          :D)
-    (:c :sharp nil       :C♯)
-    (:d :flat nil        :D♭)
-    (:d nil :dot         :Ḋ)
-    (:d :flat :dot       :Ḋ♭)
-    (:d nil :comma       :D❜)
-    (:e nil nil          :E)
-    (:e :flat nil        :E♭)
-    (:d :sharp nil       :D♯)
-    (:e nil :dot         :Ė)
-    (:e :flat :dot       :Ė♭)
-    (:e nil :comma       :E❜)
-    (:f nil nil          :F)
-    (:f nil :comma       :F❜)
-    (:e :sharp nil       :E♯)
-    (:f nil :dot         :Ḟ)
-    (:g nil nil          :G)
-    (:f :sharp nil       :F♯)
-    (:f :flat nil        :F♭)
-    (:f :flat :dot       :Ḟ♭)
-    (:g :flat nil        :G♭)
-    (:g nil :dot         :Ġ)
-    (:g :flat :dot       :Ġ♭)
-    (:g nil :comma       :G❜)
-    (:g :flat :comma     :G♭❜)
-    (:a nil nil          :A)
-    (:g :sharp nil       :G♯)
-    (:a :flat nil        :A♭)
-    (:a nil :dot         :Ȧ)
-    (:a :flat :dot       :Ȧ♭)
-    (:a nil :comma       :A❜)
-    (:a :flat :comma     :A♭❜)
-    (:a :flat :dot-comma :Ȧ♭❜)
-    (:b nil nil          :B♮)
-    (:b :natural nil     :B♮)
-    (:b :flat nil        :B♭)
-    (:b :flat :comma     :B♭❜)
-    (:b :flat :dot-comma :Ḃ♭❜)
-    (:b nil :dot-comma   :Ḃ♮❜)
-    (:a :sharp nil       :A♯)
-    (:b nil :dot         :Ḃ♮)
-    (:b :natural :dot    :Ḃ♮)
-    (:b :flat :dot       :Ḃ♭)
-    (:b nil :comma       :B♮❜)
-    ;; doubtful cases, maybe they need separate handling
-    (:f :sharp :dot      :G♭)
-    (:g :sharp :dot      :A♭)
-    (:c :sharp :dot      :D♭)
-    ;; (:c :sharp :dot      :Ċ♯)
-    ;; (:d :sharp :dot      :Ḋ♯)
-    ;; (:f :sharp :dot      :Ḟ♯)
-    ;; (:g :sharp :dot      :Ġ♯)
-    ;; (:a :sharp :dot      :Ȧ♯)
-    ))
 
-(defun lookup-setzkasten-shorthand (setzkasten-pitch)
-  (let ((result (fourth (find setzkasten-pitch *dict-setzkasten-shorthand*
-                        :key (lambda (entry)
-                               (list (first entry) (second entry) (third entry)))
-                        :test #'equal))))
+
+;; Connecting tuning functions and keymaps
+
+(defun print-keymaps ()
+  (format t "~&The following keymaps are available, use these keywords to reference them:")
+  (dolist (keymap *keymaps*)
+    (format t "~&- ~s" (first keymap))))
+
+(defun get-fifth-index (keymap-id notename)
+  "Returns the fifth-index from a keymap that is specified with KEYMAP-ID. To see available keymaps
+use PRINT-KEYMAPS."
+  (let ((result (cdr (assoc notename (get-keymap keymap-id)))))
     (if result
         result
-        (format t "~&Couldn't process note ~a" setzkasten-pitch))))
-
-(defparameter *keymaps*
-  '((:wolf-Ė-Ḃ♮ ((:Ė  . 23)
-                 (:Ȧ  . 22)
-                 (:Ḋ  . 21)
-                 (:Ġ  . 20)
-                 (:Ċ  . 19)
-                 (:Ḟ  . 18)
-                 (:Ḃ♭ . 17)
-                 (:Ė♭ . 16)
-                 (:Ȧ♭ . 15)
-                 (:Ḋ♭ . 14)
-                 (:Ġ♭ . 13)
-                 (:B♯ . 12)
-                 (:E♯ . 11)
-                 (:A♯ . 10)
-                 (:D♯ . 9)
-                 (:G♯ . 8)
-                 (:C♯ . 7)
-                 (:F♯ . 6)
-                 (:B♮ . 5)
-                 (:E  . 4)
-                 (:A  . 3)
-                 (:D  . 2)
-                 (:G  . 1)
-                 (:C  . 0)
-                 (:F  . -1)
-                 (:B♭ . -2)
-                 (:E♭ . -3)
-                 (:A♭ . -4)
-                 (:D♭ . -5)
-                 (:G♭ . -6)
-                 (:Ḃ♮ . -7)))
-    (:mt-38-g♭-ḃ♯     ((:Ḃ♯ . 31)
-                       (:Ė♯ . 30)
-                       (:Ȧ♯ . 29)
-                       (:Ḋ♯ . 28)
-                       (:Ġ♯ . 27)
-                       (:Ċ♯ . 26)
-                       (:Ḟ♯ . 25)
-                       (:Ḃ♮ . 24)
-                       (:Ė  . 23)
-                       (:Ȧ  . 22)
-                       (:Ḋ  . 21)
-                       (:Ġ  . 20)
-                       (:Ċ  . 19)
-                       (:Ḟ  . 18)
-                       (:Ḃ♭ . 17)
-                       (:Ė♭ . 16)
-                       (:Ȧ♭ . 15)
-                       (:Ḋ♭ . 14)
-                       (:Ġ♭ . 13)
-                       (:B♯ . 12)
-                       (:E♯ . 11)
-                       (:A♯ . 10)
-                       (:D♯ . 9)
-                       (:G♯ . 8)
-                       (:C♯ . 7)
-                       (:F♯ . 6)
-                       (:B♮ . 5)
-                       (:E  . 4)
-                       (:A  . 3)
-                       (:D  . 2)
-                       (:G  . 1)
-                       (:C  . 0)
-                       (:F  . -1)
-                       (:B♭ . -2)
-                       (:E♭ . -3)
-                       (:A♭ . -4)
-                       (:D♭ . -5)
-                       (:G♭ . -6)))))
-
-(defun get-keymap (name)
-  (cadr (assoc name *keymaps*)))
-
-(defun get-fifth-index (keymap notename)
-  (cdr (assoc notename keymap)))
+        (error "Notename ~s couldn't be found. There is nothing to be done to save this situation."
+               notename))))
 
 (defun get-pitch (tuning-fun keymap-name notename)
-  (tune tuning-fun (get-fifth-index (get-keymap keymap-name) notename)))
+  "Returns the pitch of a NOTENAME (given as keyword) based on a TUNING-FUN and a
+KEYMAP-NAME (use PRINT-KEYMAPS to see available keymaps)."
+  (let ((result (tune tuning-fun (get-fifth-index keymap-name notename))))
+    (if result
+        result
+        (error "Couldn't compute the pitch for ~s." notename))))
 
 (defun pitch-fun (tuning-fun keymap-name)
-  (lambda (notename) (tune tuning-fun (get-fifth-index (get-keymap keymap-name) notename))))
+  "Returns a function that calculates a pitch for a notename (the function's argument) based on a
+given TUNING-FUN and a KEYMAP-NAME."
+  (lambda (notename) (get-pitch tuning-fun keymap-name notename)))
 
-(defun pitch (tuning-fun notename)
-  (funcall tuning-fun notename))
+(defun pitch (pitch-fun notename)
+  "Returns the pitch (ratio or float) for a notename (given as a keyword) based on a pitch calculating
+function (PITCH-FUN, generated for example with PITCH-FUN). PITCH is similar to TUNE, the
+difference is that TUNE finds the elemente in a scale based on an index and PITCH finds it based
+on a notename. NOTE adds another layer of abstraction."
+  (unless (functionp pitch-fun)
+    (error "Expected a function for :pitch-fun, but ~s is not of type COMPILED-FUNCTION."
+           pitch-fun))
+  (unless (keywordp notename)
+    (error "Expected a keyword for :notename, but ~s is not of type KEYWORD." notename))
+  (funcall pitch-fun notename))
 
-(defparameter *tunings*
-  `((:name "1/4-SC-meantone, wolf Ė-Ḃ♮"
-     :id :tuning1
-     :description "Regular meantone, 1/4-comma, from C♭ (Ḃ♮) to D♯♯♯ (Ė)"
-     :fun ,(pitch-fun (meantone -1/4) :wolf-Ė-Ḃ♮))
-    (:name "1/3-SC-meantone, wolf Ė-Ḃ♮"
-     :id :tuning2
-     :description "Regular meantone, 1/3-comma, from C♭ (Ḃ♮) to D♯♯♯ (Ė)"
-     :fun ,(pitch-fun (meantone -1/3) :wolf-Ė-Ḃ♮))
-    (:name "1/4-SC-meantone, fifth-range G♭-Ḃ♯"
-           :id :tuning3
-           :description "Regular meantone, 1/4-comma with 38 keys, from G♭ to Ḃ♯"
-           :fun ,(pitch-fun (meantone -1/4) :mt-38-g♭-ḃ♯))))
+(defun note (tuning-id notename)
+  "Returns the pitch (ratio or float) of a notename (given as a keyword) based on a tuning referenced
+by TUNING-ID. Use PRINT-TUNINGS to see available tunings. See also the functions PITCH and TUNE."
+  (pitch (get-pitch-fun tuning-id) notename))
 
 
-(defun get-tuning (tuning-id)
-  (getf (find tuning-id *tunings* :key (lambda (item) (getf item :id))) :fun))
-
-(defun get-tuning-description (tuning-id)
-  (getf (find tuning-id *tunings* :key (lambda (item) (getf item :id))) :description))
+;;; Compatibilty with Setzkasten
 
 (defun setzkasten-pitch (tuning-id setzkasten-note)
-  (* (pitch (get-tuning tuning-id)
-            (lookup-setzkasten-shorthand (list (first setzkasten-note)
-                                               (second setzkasten-note)
-                                               (third setzkasten-note))))
+  "Returns the pitch (ratio or float) of a note in Setzkasten syntax, based on a tuning referenced by
+TUNING-ID. Use PRINT-TUNINGS to see available tunings. SETZKASTEN-NOTE needs to be a list of
+four elements, the first being a root notename (given as a keyword), the second one the chromatic
+alteration (nil, :sharp or :flat), the third one the enharmonic alteration (nil, :dot or :comma) and
+the last one a number describing the octave (1-5)."
+  (* (note tuning-id (lookup-setzkasten-shorthand (list (first setzkasten-note)
+                                                        (second setzkasten-note)
+                                                        (third setzkasten-note))))
      (expt 2 (fourth setzkasten-note))))
 
 
-(defun ratio-to-cent (interval-ratio &key (unit (expt 2 1/1200)))
-  (/ (log interval-ratio) (log unit)))
 
 
-(defparameter *eq-scale*
-  '((:c . 0)
-    (:c♯ . 1)
-    (:d♭ . 1)
-    (:c♯/d♭ . 1)
-    (:d . 2)
-    (:d♯ . 3)
-    (:e♭ . 3)
-    (:e♭/d♯ . 3)
-    (:e . 4)
-    (:f . 5)
-    (:f♯ . 6)
-    (:g♭ . 6)
-    (:f♯/g♭ . 6)
-    (:g . 7)
-    (:g♯ . 8)
-    (:a♭ . 8)
-    (:g♯/a♭ . 8)
-    (:a . 9)
-    (:a♯ . 10)
-    (:b♭ . 10)
-    (:b♭/a♯ . 10)
-    (:b♮ . 11)
-    (:b . 11)
-    (:c2 . 12)))
-
+;;; Calculations in the context of 12ed2
 
 (defun cent-deviation-to-eq (interval-ratio eq-notename)
-  (- (ratio-to-cent interval-ratio)
+  "Returns a ¢-value describing the interval between INTERVAL-RATIO and the interval from :c to
+EQ-NOTENAME (given as a keyword)."
+  (- (ratio->length interval-ratio)
      (* 100.0 (cdr (assoc eq-notename *eq-scale*)))))
 
 (defun calculate-cent-table (notename-list eq-equivalent-list tuning-id
                              &key (reference-note-tuning :a) (reference-note-eq :a))
+  "Prints a org-mode compatible table to the standard output containing information to program an
+electronic tuner based on ¢-tables. The NOTENAME-LIST and EQ-EQUIVALENT-LIST must consist of
+keywords. Use PRINT-TUNINGS to see possible values for TUNING-ID."
   (format t "~&~a:~%~%" (get-tuning-description tuning-id))
   (let ((cent-shift (- (cent-deviation-to-eq (pitch (get-tuning tuning-id) reference-note-tuning)
                                              reference-note-eq))))
@@ -269,35 +139,34 @@
                 (format t "~&| ~a~4,0t | ~,4f~12,0t | ~,2f~22,0t | ~,2f~32,0t | ~a~41,0t |"
                         notename
                         interval-ratio
-                        (ratio-to-cent interval-ratio)
+                        (ratio->length interval-ratio)
                         (+ cent-shift (cent-deviation-to-eq interval-ratio eq-equivalent))
-                        eq-equivalent
-                        )))
-            notename-list eq-equivalent-list))
+                        eq-equivalent)))
+            notename-list
+            eq-equivalent-list))
   nil)
 
-(calculate-cent-table '(:c :c♯ :d :e♭ :e :f :f♯ :g :g♯ :a :b♭ :b♮)
-                      '(:c :c♯/d♭ :d :e♭/d♯ :e :f :f♯/g♭ :g :g♯/a♭ :a :b♭/a♯ :b♮)
-                      :tuning3)
 
-(calculate-cent-table '(:d♭ :d♯ :e♯ :g♭ :a♭ :a♯ :b♯)
-                      '(:c♯/d♭ :e♭/d♯ :f  :f♯/g♭ :g♯/a♭ :b♭/a♯ :c2)
-                      :tuning3)
+;;; Calculating intervals
 
-(calculate-cent-table '(:ċ :ċ♯ :ḋ :ė♭ :ė :ḟ :ḟ♯ :ġ :ġ♯ :ȧ :ḃ♭ :ḃ♮)
-                      '(:c :c♯/d♭ :d :e♭/d♯ :e :f :f♯/g♭ :g :g♯/a♭ :a :b♭/a♯ :b♮)
-                      :tuning3)
+(defun interval (tuning-id notename-a direction notename-b)
+  "Returns the interval between two notes (given as keywords), based on a tuning referenced by
+TUNING-ID (keyword) and a value for the DIRECTION (:UP or :DOWN)."
+  (unless (member direction '(:up :down))
+    (error "Direction argument is expected to be :UP or :DOWN. ~s is neither." direction))
+  (let ((note-a (note tuning-id notename-a))
+        (note-b (note tuning-id notename-b)))
+    (cond ((eq notename-a notename-b) 1/1)
+          ((and (eq direction :up) (> note-b note-a)) (/ note-b note-a))
+          ((and (eq direction :down) (< note-b note-a)) (/ note-b note-a))
+          ((and (eq direction :up) (< note-b note-a)) (/ (* 2/1 note-b) note-a))
+          ((and (eq direction :down) (> note-b note-a)) (/ note-b (* 2/1 note-a)))
+          (t (error "This error should not be possible.")))))
 
-(calculate-cent-table '(:ḋ♭ :ḋ♯ :ġ♭ :ȧ♭ :ȧ♯)
-                      '(:c♯/d♭ :e♭/d♯ :f♯/g♭ :g♯/a♭ :b♭/a♯)
-                      :tuning3)
-
-
-
-(defvar fifths-c-d '(:c :g :d :a :e :b♮ :f♯ :c♯ :g♯ :d♯ :a♯ :e♯ :b♯ :ġ♭ :ḋ♭ :ȧ♭ :ė♭ :ḃ♭ :ḟ :ċ :ġ :ḋ))
-
-
-
-;; fifth tempering in quintenschaukel
-(defparameter *magical-fifth* (expt (* 9/8 (expt 2 12)) 1/21))
-(defparameter *magical-tempering* (get-tempering (expt (* 9/8 (expt 2 12)) 1/21) 3/2))
+(defun interval-size (tuning-id notename-a direction notename-b
+                      &optional (unit-interval (expt 2 1/1200)))
+  "Returns the absolute logarithmic value of the interval between two notes (NOTENAME-A and NOTENAME-B
+are given as keywords) based on a tuning referenced by TUNING-ID and the DIRECTION. The unit for the
+size of the interval is given by UNIT-INTERVAL."
+  (abs (ratio->length (interval tuning-id notename-a direction notename-b)
+                      :unit-interval unit-interval)))
