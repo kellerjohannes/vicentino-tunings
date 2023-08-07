@@ -84,7 +84,7 @@
                      (:C . 0)
                      (:F . -1)))
     (:wolf-Ė-Ḃ♮ (
-                 ;; only for debugging, need to be solved properly
+                 ;; only for debugging, needs to be solved properly
 
                  (:C-ʼ . 32)
 
