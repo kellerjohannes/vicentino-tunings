@@ -5,9 +5,9 @@
      :id :debug
      :description "Simple diatonic scale from F to B♮, for debugging purposes"
      :fun ,(pitch-fun (meantone 0) :diatonic-F-B♮))
-    (:name "1/4-SC-meantone, wolf Ė-Ḃ♮"
+    (:name "1/4-SC-meantone, wolf Ė-Ḃ♮, pure fifth in sesto ordine"
      :id :tuning1
-     :description "Regular meantone, 1/4-comma, from C♭ (Ḃ♮) to D♯♯♯ (Ė)"
+     :description "Regular meantone, 1/4-comma, from C♭ (Ḃ♮) to D♯♯♯ (Ė). The sesto ordine consists of Aʼ-Gʼ including B♭ʼ and a special key :C-ʼ that is 3/2 below G. This are all the keys described by Vicentino in b5-c8 to b5-c38."
      :fun ,(pitch-fun (meantone -1/4) :wolf-Ė-Ḃ♮))
     (:name "1/3-SC-meantone, wolf Ė-Ḃ♮"
      :id :tuning2

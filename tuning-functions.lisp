@@ -74,10 +74,17 @@ use PRINT-KEYMAPS."
 (defun get-pitch (tuning-fun keymap-name notename)
   "Returns the pitch of a NOTENAME (given as keyword) based on a TUNING-FUN and a
 KEYMAP-NAME (use PRINT-KEYMAPS to see available keymaps)."
-  (let ((result (tune tuning-fun (get-fifth-index keymap-name notename))))
-    (if result
-        result
-        (error "Couldn't compute the pitch for ~s." notename))))
+  (let ((index-or-relation (get-fifth-index keymap-name notename)))
+    (let ((result (if (integerp index-or-relation)
+                      (tune tuning-fun index-or-relation)
+                      (case (first index-or-relation)
+                        (:relation (* (second index-or-relation)
+                                      (tune tuning-fun (get-fifth-index keymap-name
+                                                                        (third index-or-relation)))))
+                        (otherwise (error "Index relation ~a unknown." (first index-or-relation)))))))
+        (if result
+            result
+            (error "Couldn't compute the pitch for ~s." notename)))))
 
 (defun pitch-fun (tuning-fun keymap-name)
   "Returns a function that calculates a pitch for a notename (the function's argument) based on a

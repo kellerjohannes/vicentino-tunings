@@ -3,6 +3,7 @@
   (:export setzkasten-pitch
            interval
            interval-size
-           ratio->length))
+           ratio->length
+           print-tunings))
 
 (in-package :vicentino-tunings)

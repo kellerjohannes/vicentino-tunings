@@ -83,19 +83,15 @@
                      (:G . 1)
                      (:C . 0)
                      (:F . -1)))
-    (:wolf-Ė-Ḃ♮ (
-                 ;; only for debugging, needs to be solved properly
-
-                 (:C-ʼ . 32)
-
-                 (:Aʼ . 31)
-                 (:B♮ʼ . 30)
-                 (:B♭ʼ . 29)
-                 (:Cʼ . 28)
-                 (:Dʼ . 27)
-                 (:Eʼ . 26)
-                 (:Fʼ . 25)
-                 (:Gʼ . 24)
+    (:wolf-Ė-Ḃ♮ ((:C-ʼ . (:relation 4/3 :G))
+                 (:Aʼ . (:relation 3/2 :D))
+                 (:B♮ʼ . (:relation 3/2 :E))
+                 (:B♭ʼ . (:relation 3/2 :E♭))
+                 (:Cʼ . (:relation 3/4 :F))
+                 (:Dʼ . (:relation 3/4 :G))
+                 (:Eʼ . (:relation 3/4 :A))
+                 (:Fʼ . (:relation 3/4 :B♭))
+                 (:Gʼ . (:relation 3/2 :C))
 
                  (:Ė  . 23)
                  (:Ȧ  . 22)
