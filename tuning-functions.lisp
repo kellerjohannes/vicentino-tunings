@@ -78,9 +78,14 @@ KEYMAP-NAME (use PRINT-KEYMAPS to see available keymaps)."
     (let ((result (if (integerp index-or-relation)
                       (tune tuning-fun index-or-relation)
                       (case (first index-or-relation)
-                        (:relation (* (second index-or-relation)
-                                      (tune tuning-fun (get-fifth-index keymap-name
-                                                                        (third index-or-relation)))))
+                        (:relation
+                         (simplify (* (second index-or-relation)
+                                      ;; obsolete: this old version can't deal with nested :relations
+                                      ;; The new version (recursive) needs more testing
+                                      ;; (tune tuning-fun (get-fifth-index keymap-name
+                                      ;;                                   (third index-or-relation)))
+                                      (get-pitch tuning-fun keymap-name (third index-or-relation))
+                                      )))
                         (otherwise (error "Index relation ~a unknown." (first index-or-relation)))))))
         (if result
             result
@@ -163,7 +168,8 @@ TUNING-ID (keyword) and a value for the DIRECTION (:UP or :DOWN)."
     (error "Direction argument is expected to be :UP or :DOWN. ~s is neither." direction))
   (let ((note-a (note tuning-id notename-a))
         (note-b (note tuning-id notename-b)))
-    (cond ((eq notename-a notename-b) 1/1)
+    (cond ((eq notename-a notename-b)
+           (if (eq direction :up) 2/1 1/2))
           ((and (eq direction :up) (> note-b note-a)) (/ note-b note-a))
           ((and (eq direction :down) (< note-b note-a)) (/ note-b note-a))
           ((and (eq direction :up) (< note-b note-a)) (/ (* 2/1 note-b) note-a))
