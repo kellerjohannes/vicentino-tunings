@@ -5,9 +5,9 @@
      :id :debug
      :description "Simple diatonic scale from F to B♮, for debugging purposes"
      :fun ,(pitch-fun (meantone 0) :diatonic-F-B♮))
-    (:name "1/4-SC-meantone, wolf Ė-Ḃ♮, pure fifth in sesto ordine"
+    (:name "1/4-SC-meantone, wolf Ė-Ḃ♮, pure fifths in sesto ordine"
      :id :tuning1
-     :description "Diese Stimmung besteht aus einer regelmässigen $\\frac{1}{4}$-Komma-Mitteltönigkeit mit einer Quintenkette von C♭ (Ḃ♮) bis D♯♯♯ (Ė). Der /sesto ordine/ besteht aus den Tasten Aʼ B♮ʼ B♭ʼ Cʼ Dʼ Eʼ Fʼ und Gʼ, ausserdem ist die eine aussergewöhnliche Tonhöhe definiert, die 3:2 tiefer als G klingt und C-ʼ genannt wird. Diese Stimmung berücksichtigt sämtliche Tasten und Noten, die in den Kapiteln b5-c8 bis b5-c38 erwähnt werden."
+     :description "Diese Stimmung besteht aus einer regelmässigen $\\frac{1}{4}$-Komma-Mitteltönigkeit mit einer Quintenkette von C♭ (Ḃ♮) bis D♯♯♯ (Ė). Der \\emph{sesto ordine} besteht aus den Tasten Aʼ B♮ʼ B♭ʼ Cʼ Dʼ Eʼ Fʼ und Gʼ, ausserdem ist die eine aussergewöhnliche Tonhöhe definiert, die 3:2 tiefer als G klingt und C-ʼ genannt wird. Diese Stimmung berücksichtigt sämtliche Tasten und Noten, die in den Kapiteln b5-c8 bis b5-c38 erwähnt werden."
      :fun ,(pitch-fun (meantone -1/4) :wolf-Ė-Ḃ♮))
     ;; Here comes :tuning2 (adaptive-just)
     (:name "Regular meantone, 1/3-comma, with Quintenschaukel"
