@@ -25,6 +25,10 @@ IDENTITY-INTERVAL (default 2/1)."
 GENERATOR-INTERVAL INDEX times, and puts the result between 1 and IDENTITY-INTERVAL."
   (simplify (expt generator-interval index) :identity-interval identity-interval))
 
+(defun ed-division (index &key (division 12) (identity-interval 2/1))
+  "Returns an interval (floating point number)."
+  (expt identity-interval (* index (/ 1 division))))
+
 (defun chain-intervals (interval-ratio index)
   "Returns the result of a chain of INTERVAL-RATIO with length INDEX. The result is equivalent to
 the function LINEAR-SYSTEM, but in CHAIN-INTERVALS each member of the chain is simplified to

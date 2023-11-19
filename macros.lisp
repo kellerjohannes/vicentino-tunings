@@ -6,3 +6,7 @@ meantone system is defined by FRACTION which describes the amount of tempering t
 unit of the syntonic comma."
   `(lambda (index)
      (linear-system index :generator-interval (temper 3/2 ,fraction))))
+
+(defmacro equal-system (division)
+  `(lambda (index)
+     (ed-division index :division ,division)))
