@@ -27,8 +27,9 @@
      :description "Standard equal temperament, 12ed2"
      :fun ,(pitch-fun (equal-system 12) :std-12ed2))
     (:name "Equal division of the octave in 31 parts"
-           :id :31ed2
-           :description "31-equal, note names expressed with double accidentals, range G♭♭ to A♯♯")))
+     :id :31ed2
+     :description "31-equal, note names expressed with double accidentals, range G♭♭ to A♯♯."
+     :fun ,(pitch-fun (equal-system 31) :31ed2))))
 
 
 (defun print-tunings ()
