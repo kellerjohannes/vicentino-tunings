@@ -178,7 +178,9 @@ TUNING-ID (keyword) and a value for the DIRECTION (:UP or :DOWN)."
           ((and (eq direction :down) (< note-b note-a)) (/ note-b note-a))
           ((and (eq direction :up) (< note-b note-a)) (/ (* 2/1 note-b) note-a))
           ((and (eq direction :down) (> note-b note-a)) (/ note-b (* 2/1 note-a)))
-          (t (error "This error should not be possible.")))))
+          (t ;;(error "This error should not be possible.")
+           (/ note-b note-a)
+             ))))
 
 (defun interval-size (tuning-id notename-a direction notename-b
                       &optional (unit-interval (expt 2 1/1200)))
