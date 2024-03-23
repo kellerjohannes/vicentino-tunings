@@ -29,7 +29,11 @@
     (:name "Equal division of the octave in 31 parts"
      :id :31ed2
      :description "31-equal, note names expressed with double accidentals or enharmonic dots, range G♭♭ to A♯♯."
-     :fun ,(pitch-fun (equal-system 31) :31ed2))))
+     :fun ,(pitch-fun (equal-system 31) :31ed2))
+    (:name "1/6-SC-meantone, fifth-range G♭♭ to A♯♯"
+     :id :1-6-sc-meantone
+     :description "Regular 1/6-comma meantone, from G♭♭ to A♯♯."
+     :fun ,(pitch-fun (meantone -1/6) :generic-mt-linear))))
 
 
 (defun print-tunings ()
