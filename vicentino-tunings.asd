@@ -5,5 +5,6 @@
                (:file "macros")
                (:file "dictionaries")
                (:file "tuning-functions")
+               (:file "lookup-tables")
                (:file "tuning-definitions")
                (:file "calculations")))

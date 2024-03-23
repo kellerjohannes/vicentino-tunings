@@ -10,3 +10,7 @@ unit of the syntonic comma."
 (defmacro equal-system (division)
   `(lambda (index)
      (ed-division index :division ,division)))
+
+(defmacro lookup-table (table)
+  `(lambda (keynr)
+     (cdr (assoc keynr ,table))))
