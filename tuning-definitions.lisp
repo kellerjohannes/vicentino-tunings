@@ -34,10 +34,16 @@
      :id :1-6-sc-meantone
      :description "Regular 1/6-comma meantone, from G♭♭ to A♯♯."
      :fun ,(pitch-fun (meantone -1/6) :generic-mt-linear))
-    (:name "Pape Arciorgano"
+    (
+     ;; TODO work in progress?
+     :name "Pape Arciorgano"
      :id :pape-arciorgano
      :description "Custom tuning for the Basel Arciorgano, designed for the spectral approach of Gerard Pape."
-     :fun ,(pitch-fun (lookup-table *lookup-table-pape-arciorgano*) :arciorgano-keynr))))
+     :fun ,(pitch-fun (lookup-table *lookup-table-pape-arciorgano*) :arciorgano-keynr))
+    (:name "Pythagorean"
+     :id :pyth
+     :description "Pythagorean chain of fifths, with defined note names ranging from c♭ to b♯."
+     :fun ,(pitch-fun (meantone 0) :mt-c♭-b♯))))
 
 
 (defun print-tunings ()
