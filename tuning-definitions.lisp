@@ -43,7 +43,10 @@
     (:name "Pythagorean"
      :id :pyth
      :description "Pythagorean chain of fifths, with defined note names ranging from c♭ to b♯."
-     :fun ,(pitch-fun (meantone 0) :mt-c♭-b♯))))
+     :fun ,(pitch-fun (meantone 0) :mt-c♭-b♯)))
+  "Contains the definitions of individual tuning systems that can be accessed from outside
+VICENTINO-TUNINGS. This collection of tunings is intended to grow over time, depending on which
+tunings are being used in academic or artistic projects.")
 
 
 (defun print-tunings ()

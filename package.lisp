@@ -5,6 +5,7 @@
            interval-size
            ratio->length
            print-tunings
-           get-tuning-description))
+           get-tuning-description
+           simplify))
 
 (in-package :vicentino-tunings)

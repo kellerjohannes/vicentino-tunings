@@ -62,9 +62,17 @@
     ;; (:f :sharp :dot      :Ḟ♯)
     ;; (:g :sharp :dot      :Ġ♯)
     ;; (:a :sharp :dot      :Ȧ♯)
-    ))
+    )
+  "The first three elements of each member represent the pitch definition used in the SETZKASTEN
+system (a program that parses encoded music examples from Nicola Vicentinos \"L'antica musica
+ridotta alla moderna prattica\" (Rome 1555). This dictionary is useful for pitch calculations within
+the SETZKASTEN package.")
 
 (defun lookup-setzkasten-shorthand (setzkasten-pitch)
+  "Expects a list with three keywords or NIL in it: a note name (:C, :D, :E, ...), a chromatic
+alteration (:SHARP, :FLAT, :NATURAL, NIL) and an enharmonic alteration (:DOT, :COMMA,
+:DOT-COMMA). Returns one keyword representing the same pitch in the custom pitch naming convention
+of VICENTINO-TUNINGS."
   (let ((result (fourth (find setzkasten-pitch *dict-setzkasten-shorthand*
                         :key (lambda (entry)
                                (list (first entry) (second entry) (third entry)))
@@ -529,14 +537,24 @@
                        (:D♭ . -5)
                        (:G♭ . -6)
                        (:C♭ . -7)
-                       ))))
+                       )))
+  "Contains dictionaries that map note names in the form of a keyword to some sort of index (an integer). This index
+can have different meantings, depending on the tuning system: for meantone systems it represents the
+position within a chain of fifths, for equal divisions it represents the number of atomic
+intervals. Alternatively to an integer, the CDR of a member can also contain a list that describes a
+calculation that will be executed in the moment of looking it up. Example '(:relation 3/2 :g)
+describes this pitch to be the interval of 3/2 higher than the CDR of the member with a CAR of :G.")
 
 (defun get-keymap (name)
+  "Expects a valid name (keyword) of a keymap dictionary and returns the complete dictionary."
   (let ((result (cadr (assoc name *keymaps*))))
     (if result
         result
         (error "Keymap ~s couldn't be found. There is nothing to do to save this situation."
                name))))
+
+
+;; TODO implement in the context of *KEYMAPS* and remove.
 
 (defparameter *eq-scale*
   '((:c . 0)
@@ -562,4 +580,5 @@
     (:b♭/a♯ . 10)
     (:b♮ . 11)
     (:b . 11)
-    (:c2 . 12)))
+    (:c2 . 12))
+  "Quick and dirty solution for equal temperament based calculations.")
