@@ -1,0 +1,106 @@
+#-*- mode: org -*-
+#+title: Documentation of VICENTINO-TUNINGS
+#+author: Johannes Keller
+
+* Introduction
+VICENTINO-TUNINGS is a common lisp system that provides functions to
+calculate pitches based on various theoretical models for musical
+scales. It focuses on the ideas about complex unconventional pitch
+spaces of Nicola Vicentino. The main source for these ideas are his
+treatise /L'antica musica ridotta alla moderna prattica/, printed 1555
+in Rome.
+
+- [[https://imslp.org/wiki/L'antica_musica_ridotta_alla_moderna_prattica_(Vicentino%2C_Nicola)][Source on IMSLP]]
+- [[https://www.fhnw.ch/plattformen/vicentino21/][New edition and English/German translation (in preparation)]]
+
+I developed this system mainly for my PhD thesis, where I compared
+many different mathematical interpretations of Vicentino's blurry and
+poetic descriptions of pitch spaces. When writing the thesis, I
+quickly understood that I will get lost in calculations doing them in
+multiple spreadsheets or short REPL sessions. Therefore I collected
+everything I needed to calculate pitches, interval sizes and scales in
+one common lisp package that I then used as a dependency for all the
+little helper tools I wrote for the PhD (VICENTINO-KEY-NAMES,
+VICENTINO-KEYBOARD-SCHEMATA, VICENTINO-FRETBOARD, DRAWER).
+
+* Functionality
+The two main functions are INTERVAL and INTERVAL-SIZE. Consider this
+example to calculate an interval size:
+
+#+begin_src lisp
+(ql:quickload :vicentino-tunings)
+(vicentino-tunings:interval :tuning1 :d♯ :up :a♭)
+#+end_src
+
+#+RESULTS:
+: 1.3695798
+
+:TUNING1 is one of the predefined tuning systems. See source for
+details about the musical significance of this tuning. To use the
+description of the tuning system, you can get it with:
+
+#+begin_src lisp
+(vicentino-tunings:get-tuning-description :tuning1)
+#+end_src
+
+#+RESULTS:
+: Diese Stimmung besteht aus einer regelmässigen $\frac{1}{4}$-Komma-Mitteltönigkeit mit einer Quintenkette von C♭ (Ḃ♮) bis D♯♯♯ (Ė). Der \emph{sesto ordine} besteht aus den Tasten Aʼ B♮ʼ B♭ʼ Cʼ Dʼ Eʼ Fʼ und Gʼ, ausserdem ist die eine aussergewöhnliche Tonhöhe definiert, die 3:2 tiefer als G klingt und C-ʼ genannt wird. Diese Stimmung berücksichtigt sämtliche Tasten und Noten, die in den Kapiteln b5-c8 bis b5-c38 erwähnt werden.
+
+The note names in the example above need to be supported by the tuning
+system, see source for available note names (collected in
+*KEYMAPS*). The direction of the interval is either :UP or :DOWN.
+
+The return value of the INTERVAL function is a number that can be
+interpreted as string length ratio or as frequency factor.
+
+To get the interval size in a non-logarithmic unit (for example
+cents), use INTERVAL-SIZE:
+
+#+begin_src lisp
+(vicentino-tunings:interval-size :tuning1 :c :up :e)
+#+end_src
+
+#+RESULTS:
+: 386.3019
+
+* Usage
+Here is an example how to easily produce a table that compares
+frequencies of two different tunings.
+
+The LET-bindings can be changed to quickly adapt the table to
+different circumstances.
+
+#+begin_src lisp
+(let ((reference-pitch 440)
+      (tuning-a :tuning1)
+      (tuning-b :12ed2)
+      (pitch-list (reverse (list :d :e :f :g :a :b♮ :c))))
+  (flet ((calculate-frequency (tuning root-note note)
+           (* (* reference-pitch (vicentino-tunings:interval tuning :a :down root-note))
+              (vicentino-tunings:interval tuning root-note :up note))))
+    (format nil "~{~%| ~a | ~,3f | ~,3f |~}"
+            (do ((remaining-pitch-list pitch-list (rest remaining-pitch-list))
+                 (result nil))
+                ((null remaining-pitch-list) (reverse result))
+              (push (first remaining-pitch-list) result)
+              (push (calculate-frequency tuning-a :c (first remaining-pitch-list))
+                    result)
+              (push (calculate-frequency tuning-b :c (first remaining-pitch-list))
+                    result)))))
+#+end_src
+
+#+RESULTS:
+:
+: | C | 526.363 | 523.251 |
+: | B♮ | 491.935 | 493.883 |
+: | A | 440.000 | 440.000 |
+: | G | 393.548 | 391.995 |
+: | F | 352.000 | 349.228 |
+: | E | 328.977 | 329.628 |
+: | D | 294.246 | 293.665 |
+
+* Lifespan
+This project is connected to my PhD thesis, therefore it is actively
+developed until end of 2024. After that it might be replaces by a more
+refined system, or left as it is. There is no plan to develop this
+further significantly.
