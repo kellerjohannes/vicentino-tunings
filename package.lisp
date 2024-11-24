@@ -6,6 +6,7 @@
            ratio->length
            print-tunings
            get-tuning-description
-           simplify))
+           simplify
+           temper))
 
 (in-package :vicentino-tunings)
