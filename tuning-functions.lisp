@@ -1,11 +1,30 @@
 (in-package :vicentino-tunings)
 
+;; Helper functions
+
+(defun find-close-ratio (number &key (ratio-list (list 2/3 3/4 1/2 1/3 1/4 1/5 1/6 1/7 1/8 1/9 1/10 1/11 1/12 0 2/7)))
+  "Returns a ratio from a given list that is closest to a given decimal number. This it normally used
+to make information about the tempering of an interval (calculated with GET-TEMPERING for example)
+more human-readable. The second return value is the difference between the given decimal number and
+the found ratio."
+  (let ((minimum-distance 100)
+        (hit nil))
+    (dolist (ratio ratio-list (values hit (- number hit)))
+      (when (< (abs (- ratio (abs number))) minimum-distance)
+        (setf minimum-distance (- ratio (abs number)))
+        (setf hit (if (minusp number) (- ratio) ratio))))))
+
 ;; Functions for calculating pitch
 
 (defun ratio->length (ratio &key (unit-interval (expt 2 1/1200)))
-  "Transforms a ratio (or floating point number) representing an interval into a length,where the
+  "Transforms a ratio (or floating point number) representing an interval into a length, where the
 UNIT-INTERVAL (default 1 ¢) can be set."
   (/ (log ratio) (log unit-interval)))
+
+(defun length->ratio (length &key (unit-interval (expt 2 1/1200)))
+  "Transforms a length representing an interval size into a decimal number. Normally used to calculate
+an interval size based on its measurement in cents."
+  (expt unit-interval length))
 
 (defun simplify (interval &key (identity-interval 2/1) (number-of-iterations 0))
   "Returns an interval (a ratio or a floating point number) that fits between 1 and
@@ -91,9 +110,9 @@ KEYMAP-NAME (use PRINT-KEYMAPS to see available keymaps)."
                                       (get-pitch tuning-fun keymap-name (third index-or-relation))
                                       )))
                         (otherwise (error "Index relation ~a unknown." (first index-or-relation)))))))
-        (if result
-            result
-            (error "Couldn't compute the pitch for ~s." notename)))))
+      (if result
+          result
+          (error "Couldn't compute the pitch for ~s." notename)))))
 
 (defun pitch-fun (tuning-fun keymap-name)
   "Returns a function that calculates a pitch for a notename (the function's argument) based on a
@@ -162,6 +181,32 @@ keywords. Use PRINT-TUNINGS to see possible values for TUNING-ID."
             eq-equivalent-list))
   nil)
 
+(defun calculate-tempering-table (notename-cent-list &key (cent-unit (expt 2 1/1200)) (tempering-unit 81/80) (reference-tuning-id :12ed2))
+  "Expects a list containing pairs in the form of '(:a . 0), where the CAR is MEMBER of '(:c :c♯ :d :e♭
+:e :f :f♯ :g :g♯ :a :b♭ :b♮) and the CDR is a cent value describing the differents to the respective
+note in the reference tuning. This is normally used to calculate the tempering of individual fifths
+in a temperament given in the form of a cent table."
+  (let ((fifths '((:c♯ . :g♯) (:f♯ . :c♯) (:b♮ . :f♯) (:e . :b♮) (:a . :e) (:d . :a) (:g . :d)
+                  (:c . :g) (:f . :c) (:b♭ . :f) (:e♭ . :b♭)))
+        (major-thirds '((:f♯ . :b♭) (:b♮ . :e♭) (:e . :g♯) (:a . :c♯) (:d . :f♯) (:g . :b♮) (:c . :e) (:f . :a) (:b♭ . :d) (:e♭ . :g) (:g♯ . :c) (:c♯ . :f))))
+    (flet ((generate-list (interval-list utopia)
+             (mapcar (lambda (interval)
+                       (let ((cent-alteration (- (cdr (assoc (cdr interval) notename-cent-list))
+                                                 (cdr (assoc (car interval) notename-cent-list)))))
+                         (cons (format nil "~a➚~a" (car interval) (cdr interval))
+                               (find-close-ratio
+                                (get-tempering (length->ratio (+ (interval-size reference-tuning-id
+                                                                                (car interval)
+                                                                                :up
+                                                                                (cdr interval)
+                                                                                cent-unit)
+                                                                 cent-alteration))
+                                               utopia
+                                               :unit tempering-unit)))))
+                     interval-list)))
+      (format t "~{~&| ~a | ~a |~}" (alexandria:flatten
+                                   (append (generate-list fifths 3/2)
+                                           (generate-list major-thirds 5/4)))))))
 
 ;;; Calculating intervals
 

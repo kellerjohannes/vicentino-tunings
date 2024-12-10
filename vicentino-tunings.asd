@@ -1,5 +1,5 @@
 (asdf:defsystem "vicentino-tunings"
-  :depends-on (:cl-svg)
+  :depends-on (:cl-svg :alexandria)
   :serial t
   :components ((:file "package")
                (:file "macros")
